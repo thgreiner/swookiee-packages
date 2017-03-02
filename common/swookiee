@@ -67,6 +67,19 @@ clean_start() {
   start
 }
 
+wait_for_swookiee_to_stop() {
+  cnt=0
+  while [ $cnt -lt 10 ]; do
+    pid=`check_status`
+    if ! [ $pid ]; then
+      break
+    fi
+    echo "... waiting for swookiee to stop."
+    sleep 1s
+    cnt=$((cnt + 1))
+  done
+}
+
 stop() {
 
   pid=`check_status`
@@ -81,11 +94,18 @@ stop() {
   kill -15 $pid
   RES=$?
   if [ $RES -eq 0 ]; then
-    echo "OK"
-  else
-    echo "FAILED"
+    wait_for_swookiee_to_stop
   fi
-  sleep 1s
+
+  pid=`check_status`
+
+  if ! [ $pid ] ; then
+    echo "swookiee stopped."
+    return 0
+  fi
+
+  echo "Killing swookiee forcefully."
+  kill -9 $pid
 }
 
 status() {
